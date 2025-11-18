@@ -1,5 +1,6 @@
 #include "main.h"
 #include "lemlib/api.hpp" // IWYU pragma: keep
+#include "pros/rtos.hpp"
 
 // controller
 pros::Controller controller(pros::E_CONTROLLER_MASTER);
@@ -14,6 +15,7 @@ pros::Motor middleMotor(11, pros::MotorGearset::blue); // motors for channel - p
 
 pros::ADIDigitalOut doinker('A');
 
+bool match_auton_selector = false;
 // Inertial Sensor on port 10
 pros::Imu imu(3);
 
@@ -131,19 +133,14 @@ void competition_initialize() {}
 ASSET(example_txt); // '.' replaced with "_" to make c++ happy
 
 /**
- * Runs during auto
- *
- * This is an example autonomous routine which demonstrates a lot of the features LemLib has to offer
- */
-void autonomous() {
-    // Back up untill robot has 3 wheels hanging out of park zone
+*/
+void match_auton() {
     leftMotors.move(100);
     rightMotors.move(100);
     ChannelMotors.move(40);
     middleMotor.move(30);
     pros::delay(1700);
 
-    //drive fowards into the park zone to park
     leftMotors.move(-80);
     rightMotors.move(80);
     pros::delay(450);
@@ -155,6 +152,39 @@ void autonomous() {
     ChannelMotors.move(-80);
     middleMotor.move(-100);
     topchanelmotor.move(-100);
+}
+
+void skills_auton(){
+    leftMotors.move(100);
+    rightMotors.move(100);
+    ChannelMotors.move(100);
+    middleMotor.move(100);
+    topchanelmotor.move(-100);
+    pros::delay(2800);
+
+    leftMotors.move(-100);
+    rightMotors.move(-100);
+    ChannelMotors.move(100);
+    middleMotor.move(100);
+    topchanelmotor.move(-100);
+    pros::delay(800);
+
+    leftMotors.brake();
+    rightMotors.brake();
+}
+// use `pros upload --slot 2` for autonomous
+
+/**
+ * Runs during auto
+ *
+ * This is an example autonomous routine which demonstrates a lot of the features LemLib has to offer
+ */
+void autonomous() {
+    if(match_auton_selector) {
+        match_auton();
+    } else {
+        skills_auton();
+    }
 }
 
 /**
@@ -173,23 +203,22 @@ void opcontrol() {
             middleMotor.move(60);
             ChannelMotors.move(50);
             topchanelmotor.move(100);
-            } else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)){
+        } else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_B)){
             //motors 10, 11, 12, 20 = F, F, F, F. goes out of the robot by going down
-          ChannelMotors.move(-90);
-          middleMotor.move(-60);
-          topchanelmotor.move(-100);
+            ChannelMotors.move(-90);
+            middleMotor.move(-60);
+            topchanelmotor.move(-100);
         } else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_A)){
-         //motors 10, 11, 12, 20 = F, R, R. goes up then into the central tube
-         topchanelmotor.move(100);
-         middleMotor.move(-60);
-         ChannelMotors.move(50);
+            //motors 10, 11, 12, 20 = F, R, R. goes up then into the central tube
+            topchanelmotor.move(100);
+            middleMotor.move(-60);
+            ChannelMotors.move(50);
         } else if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_Y)){
-         //motors 10, 11, 12, 20 = F,F,R. Goes up the into the back container 
-         topchanelmotor.move(-100);
-         middleMotor.move(60);
-         ChannelMotors.move(50);
-         } 
-         else {
+            //motors 10, 11, 12, 20 = F,F,R. Goes up the into the back container 
+            topchanelmotor.move(-100);
+            middleMotor.move(60);
+            ChannelMotors.move(50);
+        } else {
             // stops all motors when no buttons are pressed.
             middleMotor.move(0);
             ChannelMotors.move(0);
